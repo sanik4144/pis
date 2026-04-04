@@ -20,7 +20,7 @@ A **Node.js + Express** backend with **MongoDB** to manage products efficiently.
 ## Installation
 
 ```bash
-git clone <your-repo-url>
+git clone https://github.com/sanik4144/pis.git
 cd project-folder
 npm install
 npm start
@@ -28,8 +28,11 @@ npm start
 
 ## API Endpoints
 
-- `POST /product` – Create a new product  
-- `GET /product` – List all products  
-- `PUT /product/:id` – Update a product  
+- `POST /product` – Insert a new product
+- `POST /products` – Insert multiple new products
+- `GET /product/:id` – View a specific product
+- `GET /products` – List all products  
+- `PUT /product/:id` – Update a product
+- `PUT /products/:category` – Update all the "Category Names" of a product category  [Smart Watch -> Smart Ware]
 - `DELETE /product/:id` – Delete a single product  
-- `DELETE /products` – Delete multiple products
+- `DELETE /products` – Delete multiple products (Delete based on the array of IDs given in request body)
