@@ -5,17 +5,6 @@ const mongoose = require('mongoose');
 const productSchema = require('../schemas/productSchema');
 const Product = new mongoose.model("Product", productSchema);
 
-
-//Database connection
-mongoose
-    .connect('mongodb://localhost/pisDB')
-    .then(()=>{
-        console.log('Connected Successfully');
-    })
-    .catch(err=>{
-        console.log(err);
-    })
-
 //Get one product
 router.get('/product/:id', async(req, res)=>{
     try{
