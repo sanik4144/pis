@@ -3,6 +3,7 @@ const app = express();
 const productHandler = require('./routerHandler/productHandler');
 const userHandler = require('./routerHandler/userHandler');
 const connectDB = require('./config/db');
+require('dotenv').config();
 
 connectDB;
 

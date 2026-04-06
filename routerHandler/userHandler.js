@@ -1,6 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const mongoose = require('mongoose');
+const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
 
 const userSchema = require('../schemas/userSchema');
 const User = new mongoose.model("User", userSchema);
@@ -86,9 +88,20 @@ router.get('/user/:id', async(req, res)=>{
 })
 
 //create an user
-router.post('/user', async(req, res)=>{
+router.post('/signup', async(req, res)=>{
     try {
-        const result = await User.create(req.body);
+        const { name, username, role, address, mobile, registerDate } = req.body;
+        const password = await bcrypt.hash(req.body.password, 10);
+
+        const result = await User.create({
+            name: name,
+            username: username,
+            password: password,
+            role: role,
+            address: address,
+            mobile: mobile,
+            registerDate: registerDate,
+        });
             res.status(200).json({
             success: true,
             data: result,
@@ -111,9 +124,36 @@ router.post('/user', async(req, res)=>{
 })
 
 //Insert many users
-router.post('/users', async(req, res)=>{
+router.post('/usersSignup', async(req, res)=>{
     try {
-        const result = await User.insertMany(req.body);
+        const users = req.body; // expecting array
+
+        if (!Array.isArray(users)) {
+            return res.status(400).json({
+                success: false,
+                message: "Request body must be an array of users"
+            });
+        }
+
+        // Hash passwords for all users
+        const hashedUsers = await Promise.all(
+            users.map(async (user) => {
+                if (!user.password) {
+                    throw new Error("Password missing for one of the users");
+                }
+
+                const hashedPassword = await bcrypt.hash(user.password, 10);
+
+                return {
+                    ...user,
+                    password: hashedPassword
+                };
+            })
+        );
+
+        const result = await User.insertMany(
+            hashedUsers
+        );
             res.status(200).json({
             success: true,
             data: result,
@@ -130,6 +170,58 @@ router.post('/users', async(req, res)=>{
         res.status(500).json({
             success: false,
             message: "Failed to add user",
+            error: error.message,
+        })
+    }
+})
+
+//user login and jwt token generation
+router.post('/login', async(req, res)=>{
+    try {
+        const {username, password} = req.body;
+        if (!username || !password) {
+            return res.status(400).json({
+                success: false,
+                message: "Username and password are required"
+            });
+        }
+
+        const user = await User.findOne({username});
+        if (!user) {
+            return res.status(401).json({
+                success: false,
+                message: "Authentication Failed",
+            });
+        }
+
+        const isValidUser = await bcrypt.compare(password, user.password);
+        if (!isValidUser) {
+            return res.status(401).json({
+                success: false,
+                message: "Authentication Failed",
+            });
+        }
+
+        const token = jwt.sign(
+            {
+                name: user.name,
+                username: user.username,
+            },
+            process.env.JWT_SECRET,
+            {
+                expiresIn: '1h'
+            }
+        )
+
+        res.status(200).json({
+            success: true,
+            message: "Login Successfull",
+            token: token,
+        })
+    } catch (error) {
+        res.status(401).json({
+            success: false,
+            message: "Something Went Wrong",
             error: error.message,
         })
     }
